@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"bytes"
+	"encoding/hex"
 	"monkey/token"
 )
 
@@ -68,6 +70,10 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
+	case '"':
+		// tok.Type = token.STRING
+		// tok.Literal = l.readString()
+		return l.readStringToken()
 	default:
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
@@ -98,6 +104,52 @@ func (l *Lexer) readNumber() string {
 		l.readChar()
 	}
 	return l.input[position:l.position]
+}
+
+func (l *Lexer) readStringToken() token.Token {
+	var b bytes.Buffer
+loop:
+	for {
+		l.readChar()
+		switch l.ch {
+		case '"':
+			break loop
+		case 0:
+			return token.Token{Type: token.ILLEGAL, Literal: b.String()}
+		case '\\':
+			switch l.peekChar() {
+			case '"':
+				b.WriteByte('"')
+			case 'n':
+				b.WriteByte('\n')
+			case 'r':
+				b.WriteByte('\r')
+			case 't':
+				b.WriteByte('\t')
+			case 'x':
+				l.readChar()
+				l.readChar()
+				src := []byte{l.ch}
+				l.readChar()
+				src = append(src, l.ch)
+				dst, err := hex.DecodeString(string(src))
+				if err != nil {
+					return token.Token{Type: token.ILLEGAL, Literal: err.Error()}
+				}
+				b.Write(dst)
+				continue
+			}
+
+			l.readChar()
+			continue
+		}
+
+		b.WriteByte(l.ch)
+	}
+
+	l.readChar()
+
+	return token.Token{Type: token.STRING, Literal: b.String()}
 }
 
 func isDigit(ch byte) bool {

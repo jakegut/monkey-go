@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"monkey/evaluator"
 	"monkey/lexer"
 	"monkey/object"
@@ -45,4 +46,16 @@ func printParserErrors(out io.Writer, errors []string) {
 	for _, msg := range errors {
 		io.WriteString(out, "\t"+msg+"\n")
 	}
+}
+
+func ParseFile(in io.Reader) {
+	bytes, _ := ioutil.ReadAll(in)
+	env := object.NewEnvironment()
+
+	l := lexer.New(string(bytes))
+	p := parser.New(l)
+	program := p.ParseProgram()
+	evaluated := evaluator.Eval(program, env)
+
+	fmt.Println(evaluated.Inspect())
 }

@@ -22,8 +22,15 @@ let range = fn(start, end) {
     iter(start, [])
 }
 
-let a = [1, 2, 3, 4];
-let double = fn(x) { x * 2 };
-let doubled = map(a, double)
+let forEach = fn(arr, f) {
+    let iter = fn(arr) {
+        f(first(arr))
+        if (len(arr) != 1) {
+            iter(rest(arr))
+        }
+    }
+
+    iter(arr)
+}
 
 
